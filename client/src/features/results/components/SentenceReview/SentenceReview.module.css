@@ -1,0 +1,16 @@
+.wrapper{margin-bottom:var(--space-8)}
+.title{font-family:var(--font-display);font-size:var(--text-xl);font-weight:var(--font-bold);color:var(--color-text);margin-bottom:var(--space-5)}
+.list{display:flex;flex-direction:column;gap:var(--space-4)}
+.card{background:var(--color-white);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5) var(--space-6);box-shadow:var(--shadow-card)}
+.cardHeader{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)}
+.cardNum{font-size:var(--text-sm);font-weight:var(--font-bold);color:var(--color-text-muted)}
+.cardPct{font-size:var(--text-sm);font-weight:var(--font-bold);padding:3px 12px;border-radius:var(--radius-full)}
+.section{margin-bottom:var(--space-4)}
+.section:last-child{margin-bottom:0}
+.sectionLabel{font-size:var(--text-xs);font-weight:var(--font-semibold);color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-2)}
+.wordRow{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.word{padding:4px 10px;border-radius:var(--radius-sm);font-size:var(--text-sm);font-weight:var(--font-medium)}
+.wordCorrect{background:var(--color-success-light);color:var(--color-success)}
+.wordWrong{background:var(--color-danger-light);color:var(--color-danger);text-decoration:line-through}
+.answerText{font-size:var(--text-base);color:var(--color-text);line-height:var(--leading-relaxed);background:var(--color-bg-subtle);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4)}
+.noAnswer{color:var(--color-text-faint);font-style:italic}

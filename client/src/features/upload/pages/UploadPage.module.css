@@ -1,0 +1,116 @@
+.header {
+  margin-bottom: var(--space-8);
+}
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: var(--space-4);
+  transition: var(--transition);
+}
+.backBtn:hover { opacity: 0.75; }
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  margin: 0 0 6px;
+}
+.subtitle { font-size: var(--text-base); color: var(--color-text-muted); margin: 0; }
+
+.body { display: flex; flex-direction: column; gap: var(--space-8); }
+
+/* Steps */
+.step { display: flex; flex-direction: column; gap: var(--space-4); }
+.stepBadge { display: flex; align-items: center; gap: var(--space-3); }
+.stepNum {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: white;
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.stepLabel { font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--color-text); }
+
+/* Image preview */
+.imagePreviewWrap {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 2px solid var(--color-border);
+  max-height: 300px;
+  display: flex;
+  justify-content: center;
+  background: var(--color-bg-subtle);
+}
+.imagePreview { max-height: 300px; max-width: 100%; object-fit: contain; }
+
+.extractError {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-danger-light);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.ocrFallback {
+  padding: var(--space-4);
+  background: var(--color-warning-light);
+  border: 1px solid #FDE68A;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+.ocrFallback p { margin: 0; }
+
+/* Start mode cards */
+.startModes { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+@media (max-width: 540px) { .startModes { grid-template-columns: 1fr; } }
+
+.modeCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-white);
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition-bounce);
+}
+.modeCard:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.modeCardIcon { font-size: 36px; flex-shrink: 0; }
+.modeCardTitle { font-size: var(--text-base); font-weight: var(--font-bold); color: var(--color-text); margin: 0 0 3px; }
+.modeCardDesc  { font-size: var(--text-xs); color: var(--color-text-muted); margin: 0; }
+
+.resetLink {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  align-self: flex-start;
+  transition: var(--transition);
+}
+.resetLink:hover { color: var(--color-danger); }

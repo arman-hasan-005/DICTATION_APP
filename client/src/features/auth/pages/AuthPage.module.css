@@ -1,0 +1,10 @@
+.page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--color-primary-light) 0%,var(--color-bg) 60%);padding:var(--space-6)}
+.card{width:100%;max-width:440px;background:var(--color-white);border:1px solid var(--color-border);border-radius:var(--radius-2xl);padding:var(--space-10) var(--space-8);box-shadow:var(--shadow-xl);animation:fadeInUp 0.35s ease}
+.header{text-align:center;margin-bottom:var(--space-8)}
+.logo{font-size:48px;margin-bottom:var(--space-4)}
+.title{font-family:var(--font-display);font-size:var(--text-3xl);font-weight:var(--font-bold);color:var(--color-text);margin-bottom:var(--space-2)}
+.subtitle{font-size:var(--text-base);color:var(--color-text-muted)}
+.footer{margin-top:var(--space-6);text-align:center;font-size:var(--text-sm);color:var(--color-text-muted)}
+.link{color:var(--color-primary);font-weight:var(--font-semibold);text-decoration:none}
+.link:hover{text-decoration:underline}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}

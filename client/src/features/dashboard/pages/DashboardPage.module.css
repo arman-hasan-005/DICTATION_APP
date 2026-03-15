@@ -1,0 +1,1 @@
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-6);flex-wrap:wrap;gap:var(--space-4)} .greeting{font-family:var(--font-display);font-size:var(--text-3xl);font-weight:var(--font-bold);color:var(--color-text)} .subtitle{font-size:var(--text-base);color:var(--color-text-muted);margin-top:var(--space-1)}

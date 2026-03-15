@@ -1,0 +1,3 @@
+export const validateName     = (n) => !n?.trim() ? {valid:false,message:'Name is required'} : n.trim().length < 2 ? {valid:false,message:'Name must be at least 2 characters'} : {valid:true,message:''};
+export const validateEmail    = (e) => !e?.trim() ? {valid:false,message:'Email is required'} : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) ? {valid:false,message:'Enter a valid email address'} : {valid:true,message:''};
+export const validatePassword = (p) => !p ? {valid:false,message:'Password is required'} : p.length < 6 ? {valid:false,message:'Password must be at least 6 characters'} : {valid:true,message:''};

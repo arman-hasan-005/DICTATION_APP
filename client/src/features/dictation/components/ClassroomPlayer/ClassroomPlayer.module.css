@@ -1,0 +1,65 @@
+.player {
+  background: var(--color-white); border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl); padding: var(--space-6);
+  box-shadow: var(--shadow-card); display: flex; flex-direction: column; gap: var(--space-4);
+}
+.topBar { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+.progressWrap { flex: 1; min-width: 180px; }
+
+.badges { display: flex; gap: var(--space-2); flex-shrink: 0; flex-wrap: wrap; }
+.badge {
+  padding: 4px 10px; border-radius: var(--radius-full);
+  background: var(--color-bg-subtle); border: 1px solid var(--color-border);
+  font-size: var(--text-xs); font-weight: var(--font-semibold); color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.sourceBadge {
+  padding: 4px 10px; border-radius: var(--radius-full);
+  border: 1px solid; font-size: var(--text-xs); font-weight: var(--font-semibold);
+  white-space: nowrap;
+}
+
+.controlRow { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+
+.playBtn {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--color-primary); color: white; font-size: 22px;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-primary); transition: var(--transition-bounce); flex-shrink: 0;
+}
+.playBtn:hover:not(:disabled) { background: var(--color-primary-hover); transform: scale(1.08); }
+.playBtn:disabled { opacity: 0.65; cursor: not-allowed; }
+.playing    { background: var(--color-success); box-shadow: 0 4px 14px rgba(5,150,105,0.35); }
+.pausing    { background: var(--color-warning); box-shadow: 0 4px 14px rgba(217,119,6,0.35); }
+.loadingBtn { background: var(--color-text-faint); }
+
+.spinner {
+  width: 22px; height: 22px;
+  border: 3px solid rgba(255,255,255,0.35); border-top-color: white;
+  border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.replayBtn {
+  padding: var(--space-2) var(--space-4); border-radius: var(--radius-full);
+  background: var(--color-bg-subtle); border: 2px solid var(--color-border);
+  color: var(--color-text-muted); font-size: var(--text-sm); font-weight: var(--font-semibold);
+  cursor: pointer; transition: var(--transition);
+}
+.replayBtn:hover { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-light); }
+
+.pauseWrap { display: flex; align-items: center; gap: var(--space-2); flex: 1; min-width: 120px; }
+.pauseLabel { font-size: var(--text-xs); font-weight: var(--font-semibold); color: var(--color-warning); white-space: nowrap; }
+.pauseBar   { flex: 1; height: 8px; background: var(--color-border); border-radius: 99px; overflow: hidden; }
+.pauseFill  { height: 100%; background: linear-gradient(90deg, var(--color-warning), var(--color-primary)); border-radius: 99px; transition: width 0.9s linear; }
+.pauseCount { font-size: var(--text-xs); font-weight: var(--font-bold); color: var(--color-warning); min-width: 24px; }
+
+.repeatPills { display: flex; gap: 6px; }
+.pill       { width: 28px; height: 8px; border-radius: 99px; background: var(--color-border); transition: background 0.2s; }
+.pillDone   { background: var(--color-success); }
+.pillActive { background: var(--color-primary); animation: pulse 0.8s ease-in-out infinite alternate; }
+@keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
+
+.status { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0; font-style: italic; }
+.error  { font-size: var(--text-sm); color: var(--color-danger); margin: 0; padding: var(--space-3); background: var(--color-danger-light); border-radius: var(--radius-md); }
