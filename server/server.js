@@ -12,7 +12,7 @@ const app = express();
 app.use(
   cors({
     origin: isDev
-      ? ["https://dictation-app-z9b6.onrender.com", "http://localhost:3000"]
+      ? ["http://localhost:5173", "https://dictation-app-swart.vercel.app/"]
       : process.env.CLIENT_URL,
     credentials: true,
   }),
