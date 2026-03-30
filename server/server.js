@@ -11,10 +11,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: isDev
-      ? ["http://localhost:5173", "https://dictation-app-swart.vercel.app/"]
-      : process.env.CLIENT_URL,
-    credentials: true,
+    origin: "*",
   }),
 );
 
@@ -25,7 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/", (req, res) =>
   res.json({ status: "ok", message: "DictaClass API 🎙️ v2" }),
 );
-app.use("/api", routes);
+app.use("/api/auth", authRoutes);
 
 // 404
 app.use((req, res) =>
