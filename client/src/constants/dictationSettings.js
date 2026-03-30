@@ -23,16 +23,17 @@ export const PAUSE_OPTIONS = [
   { value: 15, label: "15 seconds" },
 ];
 
+export const SETTINGS_VERSION = 2;
 // voice/accent apply to:
 //   - Google TTS (uploaded content)
 //   - Browser speech synthesis (fallback)
 export const DEFAULT_DICTATION_SETTINGS = {
   voice: "female",
-  accent: "american",
+  accent: "british",
   speed: 1.0,
-  repeatCount: 1,
-  pauseDuration: 2,
-  autoAdvance: false,
+  repeatCount: 2,
+  pauseDuration: 3,
+  autoAdvance: true,
 };
 
 // Maps accent values to browser SpeechSynthesis language codes

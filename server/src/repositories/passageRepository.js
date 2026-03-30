@@ -1,69 +1,101 @@
-const Passage = require('../models/Passage');
+const Passage = require("../models/Passage");
 
 const passageRepository = {
   // ── Standard CRUD ─────────────────────────────────────────────────────────
   findAll: (filters = {}) => {
     const q = { isActive: true };
     if (filters.level) q.level = filters.level;
-    // Exclude raw audio buffers from list responses for performance
-    return Passage.find(q).select('-audioFiles.data').sort({ createdAt: -1 });
+    return Passage.find(q).select("-audioFiles.data").sort({ createdAt: -1 });
   },
 
-  findById: (id) =>
-    // Also exclude buffer data — audio is served via a dedicated endpoint
-    Passage.findById(id).select('-audioFiles.data'),
+  findById: (id) => Passage.findById(id).select("-audioFiles.data"),
 
-  findByIdWithAudio: (id) =>
-    // Full document including buffers — only called when serving audio
-    Passage.findById(id),
+  findByIdWithAudio: (id) => Passage.findById(id),
 
   findRandom: async (level) => {
     const q = { isActive: true };
     if (level) q.level = level;
     const count = await Passage.countDocuments(q);
     return Passage.findOne(q)
-      .select('-audioFiles.data')
+      .select("-audioFiles.data")
       .skip(Math.floor(Math.random() * count));
   },
 
   create: (data) => Passage.create(data),
 
   updateById: (id, u) =>
-    Passage.findByIdAndUpdate(id, { $set: u }, { new: true }).select('-audioFiles.data'),
+    Passage.findByIdAndUpdate(id, { $set: u }, { new: true }).select(
+      "-audioFiles.data",
+    ),
 
   // ── Audio file management ─────────────────────────────────────────────────
 
   /**
-   * Upsert an audio file for a specific sentence index.
-   * If an entry for that sentenceIndex already exists, replace it.
+   * Upsert audio for a specific sentenceIndex + voice + accent combination.
+   * Each combination is stored separately so different voice settings
+   * each get their own cached audio file.
    */
-  upsertAudioFile: async (passageId, sentenceIndex, data, contentType = 'audio/mpeg') => {
-    // Remove any existing entry for this sentenceIndex first
+  upsertAudioFile: async (
+    passageId,
+    sentenceIndex,
+    voice,
+    accent,
+    data,
+    contentType = "audio/mpeg",
+  ) => {
+    // Remove existing entry for this exact combination
     await Passage.updateOne(
       { _id: passageId },
-      { $pull: { audioFiles: { sentenceIndex } } }
+      { $pull: { audioFiles: { sentenceIndex, voice, accent } } },
     );
-    // Push the new entry
+    // Push new entry
     return Passage.findByIdAndUpdate(
       passageId,
       {
         $push: {
-          audioFiles: { sentenceIndex, data, contentType, uploadedAt: new Date() },
+          audioFiles: {
+            sentenceIndex,
+            voice,
+            accent,
+            data,
+            contentType,
+            uploadedAt: new Date(),
+          },
         },
       },
-      { new: true }
-    ).select('-audioFiles.data');
+      { new: true },
+    ).select("-audioFiles.data");
   },
 
   /**
-   * Delete stored audio for a specific sentence.
+   * Find audio for a specific sentenceIndex + voice + accent combination.
    */
-  deleteAudioFile: (passageId, sentenceIndex) =>
-    Passage.findByIdAndUpdate(
+  findAudioFile: async (passageId, sentenceIndex, voice, accent) => {
+    const passage = await Passage.findById(passageId);
+    if (!passage) return null;
+    return (
+      passage.audioFiles?.find(
+        (af) =>
+          af.sentenceIndex === sentenceIndex &&
+          af.voice === voice &&
+          af.accent === accent,
+      ) || null
+    );
+  },
+
+  /**
+   * Delete stored audio for a specific sentenceIndex + voice + accent.
+   * If voice/accent not provided, deletes all audio for that sentenceIndex.
+   */
+  deleteAudioFile: (passageId, sentenceIndex, voice, accent) => {
+    const pull =
+      voice && accent ? { sentenceIndex, voice, accent } : { sentenceIndex };
+    return Passage.findByIdAndUpdate(
       passageId,
-      { $pull: { audioFiles: { sentenceIndex } } },
-      { new: true }
-    ).select('-audioFiles.data'),
+      { $pull: { audioFiles: pull } },
+      { new: true },
+    ).select("-audioFiles.data");
+  },
 };
 
 module.exports = passageRepository;

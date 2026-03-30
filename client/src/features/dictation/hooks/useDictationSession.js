@@ -2,10 +2,6 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../../../constants/routes";
 
-/**
- * Split text into sentences client-side.
- * Used as fallback when passage.sentences is empty (e.g. old DB records).
- */
 function splitSentences(text) {
   if (!text?.trim()) return [];
   const parts = text
@@ -18,13 +14,11 @@ function splitSentences(text) {
 export const useDictationSession = (passage, initialHandwrite = false) => {
   const navigate = useNavigate();
 
-  // Use passage.sentences if populated; otherwise split from passage.text.
-  // This fixes the case where old DB records have sentences: [] but text is set.
   const rawSentences = passage?.sentences || [];
   const sentences =
     rawSentences.length > 0
       ? rawSentences
-      : splitSentences(passage?.text || passage?.content || "");
+      : splitSentences(passage?.content || passage?.text || "");
 
   const totalCount = sentences.length;
 
@@ -34,6 +28,7 @@ export const useDictationSession = (passage, initialHandwrite = false) => {
   );
   const [handwrittenText, setHandwrittenText] = useState("");
   const [isHandwrite, setIsHandwrite] = useState(initialHandwrite);
+  const [completed, setCompleted] = useState(false);
 
   const currentSentence = sentences[currentIndex] || "";
   const isLast = currentIndex === totalCount - 1;
@@ -51,28 +46,22 @@ export const useDictationSession = (passage, initialHandwrite = false) => {
     [currentIndex],
   );
 
+  // goNext — only moves between sentences, never navigates away
+  // When on last sentence, marks session as completed for manual review
   const goNext = useCallback(() => {
     if (isLast) {
-      navigate(ROUTES.RESULTS, {
-        state: { passage, sentences, answers, handwrittenText, isHandwrite },
-      });
+      setCompleted(true);
     } else {
       setCurrentIndex((i) => i + 1);
     }
-  }, [
-    isLast,
-    passage,
-    sentences,
-    answers,
-    handwrittenText,
-    isHandwrite,
-    navigate,
-  ]);
+  }, [isLast]);
 
   const goPrev = useCallback(() => {
+    setCompleted(false);
     setCurrentIndex((i) => Math.max(0, i - 1));
   }, []);
 
+  // finishSession — called only when user explicitly clicks Submit
   const finishSession = useCallback(() => {
     navigate(ROUTES.RESULTS, {
       state: { passage, sentences, answers, handwrittenText, isHandwrite },
@@ -89,11 +78,13 @@ export const useDictationSession = (passage, initialHandwrite = false) => {
     isHandwrite,
     progress,
     isLast,
+    completed,
     setAnswer,
     setHandwrittenText,
     setIsHandwrite,
     goNext,
     goPrev,
     finishSession,
+    setCompleted,
   };
 };

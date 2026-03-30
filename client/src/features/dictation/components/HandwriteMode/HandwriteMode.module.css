@@ -1,154 +1,92 @@
 .wrapper {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 
-/* Tabs */
-.tabs {
-  display: flex;
-  gap: var(--space-2);
-  border-bottom: 2px solid var(--color-border);
-  padding-bottom: 0;
-}
-.tab {
-  padding: 10px 20px;
-  border: none;
-  background: none;
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-muted);
-  cursor: pointer;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -2px;
-  transition: var(--transition);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-}
-.tab:hover { color: var(--color-primary); background: var(--color-primary-light); }
-.tabActive { color: var(--color-primary); border-bottom-color: var(--color-primary); }
-
+/* Instruction banner */
 .instruction {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-  margin: 0;
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-bg-subtle);
-  border-radius: var(--radius-md);
-  border-left: 3px solid var(--color-primary);
-}
-
-/* ── Notebook ── */
-.notebookPanel { display: flex; flex-direction: column; gap: var(--space-3); }
-
-.notebookOuter {
   display: flex;
-  border: 2px solid var(--color-border);
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-primary-light);
+  border: 1px solid rgba(79, 70, 229, 0.18);
   border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-  background: #fffdf5;
-  min-height: 340px;
 }
-
-[data-theme='dark'] .notebookOuter { background: #1a1f2e; }
-
-.notebookMargin {
-  width: 44px;
+.instructionIcon {
+  font-size: 22px;
   flex-shrink: 0;
-  background: #ffebeb;
-  border-right: 2px solid #f87171;
 }
-[data-theme='dark'] .notebookMargin { background: #2d1f1f; border-right-color: #7f1d1d; }
-
-.notebookLines {
-  flex: 1;
-  position: relative;
-  /* Horizontal ruled lines */
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0px,
-    transparent 33px,
-    #bfdbfe 33px,
-    #bfdbfe 34px
-  );
-  background-position: 0 10px;
-}
-[data-theme='dark'] .notebookLines {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0px,
-    transparent 33px,
-    #1e3a5f 33px,
-    #1e3a5f 34px
-  );
-}
-
-.notebookTextarea {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  min-height: 320px;
-  padding: 12px 16px;
-  background: transparent;
-  border: none;
-  outline: none;
-  resize: none;
-  font-family: 'Georgia', serif;
-  font-size: 18px;
-  line-height: 34px;
+.instruction p {
+  font-size: var(--text-sm);
   color: var(--color-text);
-  letter-spacing: 0.02em;
-  caret-color: var(--color-primary);
-  box-sizing: border-box;
+  margin: 0;
+  line-height: var(--leading-relaxed);
 }
 
-.notebookMeta {
-  font-size: var(--text-xs);
-  color: var(--color-text-faint);
-  text-align: right;
-}
-
-/* ── Photo panel ── */
-.photoPanel { display: flex; flex-direction: column; gap: var(--space-4); }
-
+/* Upload area */
 .uploadArea {
   border: 3px dashed var(--color-border);
   border-radius: var(--radius-xl);
-  padding: var(--space-10) var(--space-8);
-  text-align: center;
-  cursor: pointer;
-  transition: var(--transition);
-  background: var(--color-bg-subtle);
-  min-height: 160px;
+  min-height: 200px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  padding: var(--space-8);
+  cursor: pointer;
+  background: var(--color-bg-subtle);
+  text-align: center;
+  transition: var(--transition);
   outline: none;
 }
-.uploadArea:hover { border-color: var(--color-primary); background: var(--color-primary-light); }
-.uploadAreaHasImage {
+.uploadArea:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+.hasImage {
   border-style: solid;
   border-color: var(--color-success);
   background: var(--color-success-light);
-  padding: var(--space-3);
+  padding: var(--space-4);
+  gap: var(--space-2);
 }
 
-.uploadIcon  { font-size: 40px; }
-.uploadLabel { font-size: var(--text-base); font-weight: var(--font-semibold); color: var(--color-text); margin: 0; }
-.uploadHint  { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0; }
+.uploadIcon {
+  font-size: 48px;
+}
+.uploadLabel {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+  margin: 0;
+}
+.uploadHint {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
 
 .preview {
   max-width: 100%;
-  max-height: 280px;
+  max-height: 300px;
   border-radius: var(--radius-md);
   object-fit: contain;
+  box-shadow: var(--shadow-md);
+}
+.changeHint {
+  font-size: var(--text-xs);
+  color: var(--color-success);
+  font-weight: var(--font-semibold);
 }
 
-.hidden { display: none; }
+.hidden {
+  display: none;
+}
 
+/* Scanning banner */
 .scanningBanner {
   display: flex;
   align-items: center;
@@ -161,15 +99,20 @@
   font-weight: var(--font-semibold);
   color: var(--color-primary);
 }
-.scanSpinner {
-  width: 16px; height: 16px;
-  border: 2px solid rgba(79,70,229,0.3);
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(79, 70, 229, 0.3);
   border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .scanErr {
   padding: var(--space-3) var(--space-4);
@@ -181,13 +124,21 @@
   margin: 0;
 }
 
-.extractedSection { display: flex; flex-direction: column; gap: var(--space-2); }
+/* Extracted text section */
+.extractedSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
 .extractedLabel {
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);
   color: var(--color-text);
 }
-.editHint { font-weight: normal; color: var(--color-text-muted); }
+.editHint {
+  font-weight: normal;
+  color: var(--color-text-muted);
+}
 .extractedTextarea {
   width: 100%;
   padding: var(--space-3) var(--space-4);
@@ -203,7 +154,15 @@
   transition: var(--transition);
   box-sizing: border-box;
 }
-.extractedTextarea:focus { border-color: var(--color-primary); background: var(--color-white); }
+.extractedTextarea:focus {
+  border-color: var(--color-primary);
+  background: var(--color-white);
+}
+.wordCount {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  text-align: right;
+}
 
 .submitHint {
   font-size: var(--text-sm);

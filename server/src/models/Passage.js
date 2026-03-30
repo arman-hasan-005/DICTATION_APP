@@ -1,38 +1,52 @@
-const mongoose = require('mongoose');
-const { LEVELS } = require('../utils/constants');
+const mongoose = require("mongoose");
+const { LEVELS } = require("../utils/constants");
 
 /**
- * audioFiles stores pre-recorded audio per sentence.
- * The actual audio bytes are kept as a Buffer in MongoDB.
- * When the passage is serialised to JSON (API response), the buffer is
- * NOT included — only the list of sentence indexes that have audio is sent,
- * so the client knows which sentences can be fetched from /audio/:index.
+ * audioFiles stores TTS-cached audio per sentence per voice combination.
+ * Each entry is keyed by sentenceIndex + voice + accent so each combination
+ * gets its own cached audio file.
+ *
+ * The raw Buffer is excluded from API responses — only audioCache[] is sent
+ * so the client knows which (sentenceIndex, voice, accent) combinations exist.
  */
-const audioFileSchema = new mongoose.Schema({
-  sentenceIndex: { type: Number, required: true },
-  data:          { type: Buffer, required: true },
-  contentType:   { type: String, default: 'audio/mpeg' },
-  uploadedAt:    { type: Date,   default: Date.now },
-}, { _id: false });
+const audioFileSchema = new mongoose.Schema(
+  {
+    sentenceIndex: { type: Number, required: true },
+    voice: { type: String, default: "female" }, // 'female' | 'male'
+    accent: { type: String, default: "american" }, // 'american' | 'british' | 'indian'
+    data: { type: Buffer, required: true },
+    contentType: { type: String, default: "audio/mpeg" },
+    uploadedAt: { type: Date, default: Date.now },
+  },
+  { _id: false },
+);
 
-const passageSchema = new mongoose.Schema({
-  title:     { type: String, required: true, trim: true },
-  text:      { type: String, required: true },
-  sentences: [{ type: String }],
-  level:     { type: String, enum: Object.values(LEVELS), default: LEVELS.BEGINNER, index: true },
-  wordCount: { type: Number, default: 0 },
-  isActive:  { type: Boolean, default: true },
-  audioFiles: [audioFileSchema],
-}, { timestamps: true });
+const passageSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true, trim: true },
+    text: { type: String, required: true },
+    sentences: [{ type: String }],
+    level: {
+      type: String,
+      enum: Object.values(LEVELS),
+      default: LEVELS.BEGINNER,
+      index: true,
+    },
+    wordCount: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
+    audioFiles: [audioFileSchema],
+  },
+  { timestamps: true },
+);
 
 // Auto-split text into sentences and count words on save
-passageSchema.pre('save', function (next) {
-  if (this.isModified('text')) {
+passageSchema.pre("save", function (next) {
+  if (this.isModified("text")) {
     this.wordCount = this.text.split(/\s+/).filter(Boolean).length;
     if (!this.sentences || this.sentences.length === 0) {
       this.sentences = this.text
         .split(/(?<=[.!?])\s+/)
-        .map(s => s.trim())
+        .map((s) => s.trim())
         .filter(Boolean);
     }
   }
@@ -40,16 +54,23 @@ passageSchema.pre('save', function (next) {
 });
 
 /**
- * Custom toJSON: strip the raw audio buffers from the response.
- * Send only the sentence indexes that have stored audio so the client
- * can decide whether to fetch audio or fall back to browser speech.
+ * Custom toJSON — strip raw audio buffers.
+ * Send audioCache: [{ sentenceIndex, voice, accent }] so client knows
+ * which combinations have cached audio without downloading the data.
  */
 passageSchema.methods.toJSON = function () {
   const obj = this.toObject();
-  // Replace audioFiles array (which contains raw buffers) with just indexes
-  obj.audioIndexes = (obj.audioFiles || []).map(af => af.sentenceIndex);
+  obj.audioCache = (obj.audioFiles || []).map((af) => ({
+    sentenceIndex: af.sentenceIndex,
+    voice: af.voice || "female",
+    accent: af.accent || "american",
+  }));
+  // Keep audioIndexes for backwards compatibility
+  obj.audioIndexes = [
+    ...new Set((obj.audioFiles || []).map((af) => af.sentenceIndex)),
+  ];
   delete obj.audioFiles;
   return obj;
 };
 
-module.exports = mongoose.model('Passage', passageSchema);
+module.exports = mongoose.model("Passage", passageSchema);

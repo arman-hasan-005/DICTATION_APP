@@ -1,11 +1,11 @@
-const asyncHandler   = require('../utils/asyncHandler');
-const passageService = require('../services/passageService');
-const googleTTS      = require('../config/googleTTS');
-const AppError       = require('../utils/AppError');
+const asyncHandler = require("../utils/asyncHandler");
+const passageService = require("../services/passageService");
+const googleTTS = require("../config/googleTTS");
+const AppError = require("../utils/AppError");
 
 // ── Standard passage CRUD ─────────────────────────────────────────────────────
 
-const getPassages      = asyncHandler(async (req, res) => {
+const getPassages = asyncHandler(async (req, res) => {
   res.json(await passageService.getAll({ level: req.query.level }));
 });
 
@@ -13,11 +13,11 @@ const getRandomPassage = asyncHandler(async (req, res) => {
   res.json(await passageService.getRandom(req.query.level));
 });
 
-const getPassageById   = asyncHandler(async (req, res) => {
+const getPassageById = asyncHandler(async (req, res) => {
   res.json(await passageService.getById(req.params.id));
 });
 
-const createPassage    = asyncHandler(async (req, res) => {
+const createPassage = asyncHandler(async (req, res) => {
   res.status(201).json(await passageService.create(req.body));
 });
 
@@ -36,36 +36,40 @@ const createPassage    = asyncHandler(async (req, res) => {
  * The client checks for `fallback: true` and switches to browser speech.
  */
 const generateTTS = asyncHandler(async (req, res) => {
-  const { text, voice = 'female', accent = 'american' } = req.body;
-  if (!text?.trim()) throw new AppError('Text is required', 400);
+  const { text, voice = "female", accent = "american" } = req.body;
+  if (!text?.trim()) throw new AppError("Text is required", 400);
 
   // If Google TTS is not configured, tell the client to use browser fallback
   if (!googleTTS.isConfigured()) {
     return res.status(200).json({
-      fallback:  true,
-      reason:    'Google TTS not configured — use browser speech',
-      text:      text.trim(),
+      fallback: true,
+      reason: "Google TTS not configured — use browser speech",
+      text: text.trim(),
     });
   }
 
   try {
-    const audioBuffer = await googleTTS.generateSpeech(text.trim(), voice, accent);
+    const audioBuffer = await googleTTS.generateSpeech(
+      text.trim(),
+      voice,
+      accent,
+    );
     res.set({
-      'Content-Type':   'audio/mpeg',
-      'Content-Length': audioBuffer.length,
-      'Cache-Control':  'no-store',   // uploaded content is ephemeral
-      'X-Voice':        voice,
-      'X-Accent':       accent,
+      "Content-Type": "audio/mpeg",
+      "Content-Length": audioBuffer.length,
+      "Cache-Control": "no-store", // uploaded content is ephemeral
+      "X-Voice": voice,
+      "X-Accent": accent,
     });
     return res.send(audioBuffer);
   } catch (err) {
     // Any Google TTS failure → tell client to fall back to browser voice
     // (do NOT throw — we want a 200 response so the client can handle gracefully)
-    console.warn('[TTS] Google TTS failed, signalling fallback:', err.message);
+    console.warn("[TTS] Google TTS failed, signalling fallback:", err.message);
     return res.status(200).json({
       fallback: true,
-      reason:   err.message,
-      text:     text.trim(),
+      reason: err.message,
+      text: text.trim(),
     });
   }
 });
@@ -80,17 +84,20 @@ const generateTTS = asyncHandler(async (req, res) => {
  */
 const getSentenceAudio = asyncHandler(async (req, res) => {
   const { id, sentenceIndex } = req.params;
-  const audio = await passageService.getAudio(id, sentenceIndex);
+  const { voice = "female", accent = "american" } = req.query;
+
+  const audio = await passageService.getAudio(id, sentenceIndex, voice, accent);
 
   if (!audio) {
-    // Signal "no stored audio" — client will use browser speech
-    return res.status(404).json({ noAudio: true, sentenceIndex: parseInt(sentenceIndex, 10) });
+    return res
+      .status(404)
+      .json({ noAudio: true, sentenceIndex: parseInt(sentenceIndex, 10) });
   }
 
   res.set({
-    'Content-Type':   audio.contentType,
-    'Content-Length': audio.data.length,
-    'Cache-Control':  'public, max-age=86400',  // cache stored audio for 1 day
+    "Content-Type": audio.contentType,
+    "Content-Length": audio.data.length,
+    "Cache-Control": "public, max-age=86400",
   });
   res.send(audio.data);
 });
@@ -103,33 +110,46 @@ const getSentenceAudio = asyncHandler(async (req, res) => {
  */
 const uploadSentenceAudio = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { sentenceIndex, audioBase64, contentType = 'audio/mpeg' } = req.body;
+  const {
+    sentenceIndex,
+    audioBase64,
+    contentType = "audio/mpeg",
+    voice = "female",
+    accent = "american",
+  } = req.body;
 
   let audioBuffer;
 
   if (req.file) {
-    // File uploaded via multipart
     audioBuffer = req.file.buffer;
   } else if (audioBase64) {
-    // Base64 encoded audio sent as JSON
-    audioBuffer = Buffer.from(audioBase64, 'base64');
+    audioBuffer = Buffer.from(audioBase64, "base64");
   } else {
-    throw new AppError('No audio data provided. Send a file or audioBase64 field.', 400);
+    throw new AppError(
+      "No audio data provided. Send a file or audioBase64 field.",
+      400,
+    );
   }
 
-  if (!audioBuffer.length) throw new AppError('Audio file is empty.', 400);
+  if (!audioBuffer.length) throw new AppError("Audio file is empty.", 400);
 
   const updated = await passageService.saveAudio(
     id,
     sentenceIndex,
+    voice,
+    accent,
     audioBuffer,
-    req.file?.mimetype || contentType
+    req.file?.mimetype || contentType,
   );
 
+  const json = updated.toJSON();
   res.status(200).json({
-    message:       'Audio saved successfully',
+    message: "Audio saved successfully",
     sentenceIndex: parseInt(sentenceIndex, 10),
-    audioIndexes:  updated.toJSON().audioIndexes,
+    voice,
+    accent,
+    audioIndexes: json.audioIndexes,
+    audioCache: json.audioCache,
   });
 });
 
@@ -139,10 +159,18 @@ const uploadSentenceAudio = asyncHandler(async (req, res) => {
  */
 const deleteSentenceAudio = asyncHandler(async (req, res) => {
   const { id, sentenceIndex } = req.params;
-  const updated = await passageService.deleteAudio(id, sentenceIndex);
+  const { voice, accent } = req.query;
+  const updated = await passageService.deleteAudio(
+    id,
+    sentenceIndex,
+    voice,
+    accent,
+  );
+  const json = updated.toJSON();
   res.json({
-    message:      'Audio deleted',
-    audioIndexes: updated.toJSON().audioIndexes,
+    message: "Audio deleted",
+    audioIndexes: json.audioIndexes,
+    audioCache: json.audioCache,
   });
 });
 
@@ -154,13 +182,18 @@ const deleteSentenceAudio = asyncHandler(async (req, res) => {
 const ttsStatus = asyncHandler(async (req, res) => {
   res.json({
     googleTTS: googleTTS.isConfigured(),
-    voices:    googleTTS.isConfigured() ? googleTTS.VOICE_NAMES : null,
+    voices: googleTTS.isConfigured() ? googleTTS.VOICE_NAMES : null,
   });
 });
 
 module.exports = {
-  getPassages, getRandomPassage, getPassageById, createPassage,
+  getPassages,
+  getRandomPassage,
+  getPassageById,
+  createPassage,
   generateTTS,
-  getSentenceAudio, uploadSentenceAudio, deleteSentenceAudio,
+  getSentenceAudio,
+  uploadSentenceAudio,
+  deleteSentenceAudio,
   ttsStatus,
 };

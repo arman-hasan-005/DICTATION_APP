@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import PageWrapper from "../../../components/layout/PageWrapper/PageWrapper";
 import ClassroomPlayer from "../components/ClassroomPlayer/ClassroomPlayer";
 import DictationSettings from "../components/DictationSettings/DictationSettings";
 import TypeMode from "../components/TypeMode/TypeMode";
 import HandwriteMode from "../components/HandwriteMode/HandwriteMode";
+import Button from "../../../components/ui/Button/Button";
 import { useDictationSession } from "../hooks/useDictationSession";
 import { useClassroomPlayer } from "../hooks/useClassroomPlayer";
 import { useDictationSettings } from "../../../context/DictationSettingsContext";
@@ -35,96 +36,124 @@ export default function DictationPage() {
   const voice = settings.voice ?? user?.preferredVoice ?? "female";
   const accent = settings.accent ?? user?.preferredAccent ?? "american";
 
-  /**
-   * getAudioSource — resolves how to play a single sentence.
-   *
-   * Pre-written passage:
-   *   Has audioIndexes entry → fetch stored audio → fallback browser on any error
-   *   No entry              → browser speech directly
-   *
-   * Uploaded content:
-   *   POST /passages/tts → Google TTS mp3 blob  → fallback browser
-   *   Server returns fallback JSON or any error → browser speech
-   */
+  const cachedKeysRef = useRef(
+    new Set(
+      (passage?.audioCache || []).map(
+        (a) => `${a.sentenceIndex}_${a.voice}_${a.accent}`,
+      ),
+    ),
+  );
+
+  const _callGoogleTTS = useCallback(
+    async (text) => {
+      try {
+        const res = await http.post(
+          "/passages/tts",
+          { text, voice, accent },
+          { responseType: "blob" },
+        );
+        const blob = res.data;
+        const contentType = res.headers?.["content-type"] || blob?.type || "";
+        if (
+          contentType.includes("application/json") ||
+          contentType.includes("text/")
+        )
+          return null;
+        if (blob && blob.size > 100) return blob;
+        return null;
+      } catch {
+        return null;
+      }
+    },
+    [voice, accent],
+  );
+
+  const _saveAudioInBackground = useCallback(
+    async (passageId, sentenceIndex, blob) => {
+      try {
+        const arrayBuffer = await blob.arrayBuffer();
+        const base64 = btoa(
+          new Uint8Array(arrayBuffer).reduce(
+            (data, byte) => data + String.fromCharCode(byte),
+            "",
+          ),
+        );
+        await http.post(`/passages/${passageId}/audio`, {
+          sentenceIndex,
+          audioBase64: base64,
+          contentType: "audio/mpeg",
+          voice,
+          accent,
+        });
+        cachedKeysRef.current.add(`${sentenceIndex}_${voice}_${accent}`);
+      } catch {
+        // Silently ignore — audio already played, caching is best-effort
+      }
+    },
+    [voice, accent],
+  );
+
   const getAudioSource = useCallback(
     async (sentenceText, sentenceIndex) => {
-      if (!sentenceText?.trim()) {
+      if (!sentenceText?.trim()) return { type: "browser", text: sentenceText };
+
+      // Uploaded content → Google TTS → browser fallback
+      if (passage?.isUploaded) {
+        const blob = await _callGoogleTTS(sentenceText);
+        if (blob) return { type: "blob", blob, sourceType: "google" };
         return { type: "browser", text: sentenceText };
       }
 
-      // ── Path A: Uploaded content → Google TTS ────────────────────────────
-      if (passage?.isUploaded) {
-        try {
-          const res = await http.post(
-            "/passages/tts",
-            { text: sentenceText, voice, accent },
-            { responseType: "blob" },
-          );
-
-          // Server may return JSON { fallback: true } even with responseType:'blob'
-          // Detect by reading the blob as text
-          const blob = res.data;
-          const contentType = res.headers?.["content-type"] || blob?.type || "";
-
-          if (
-            contentType.includes("application/json") ||
-            contentType.includes("text/")
-          ) {
-            // Server signalled fallback
-            return { type: "browser", text: sentenceText };
-          }
-
-          // Sanity check — a real MP3 starts with 0xFF 0xFB or ID3 header
-          if (blob && blob.size > 100) {
-            return { type: "blob", blob, sourceType: "google" };
-          }
-
-          return { type: "browser", text: sentenceText };
-        } catch {
-          return { type: "browser", text: sentenceText };
-        }
-      }
-
-      // ── Path B: Pre-written passage → stored audio ───────────────────────
+      // Pre-written passage
       const passageId = passage?._id;
+      const cacheKey = `${sentenceIndex}_${voice}_${accent}`;
       const hasStored =
         passageId &&
         !passageId.startsWith("upload_") &&
-        Array.isArray(passage?.audioIndexes) &&
-        passage.audioIndexes.includes(sentenceIndex);
+        (cachedKeysRef.current.has(cacheKey) ||
+          (Array.isArray(passage?.audioCache) &&
+            passage.audioCache.some(
+              (a) =>
+                a.sentenceIndex === sentenceIndex &&
+                a.voice === voice &&
+                a.accent === accent,
+            )));
 
+      // Step 1: Try stored audio
       if (hasStored) {
         try {
           const res = await http.get(
             `/passages/${passageId}/audio/${sentenceIndex}`,
-            { responseType: "blob" },
+            { responseType: "blob", params: { voice, accent } },
           );
-
           const blob = res.data;
           const contentType = res.headers?.["content-type"] || blob?.type || "";
-
-          // 404 returns JSON — detect and fall through
           if (
-            contentType.includes("application/json") ||
-            contentType.includes("text/")
+            !contentType.includes("application/json") &&
+            blob &&
+            blob.size > 100
           ) {
-            return { type: "browser", text: sentenceText };
-          }
-
-          if (blob && blob.size > 100) {
             return { type: "blob", blob, sourceType: "stored" };
           }
-
-          return { type: "browser", text: sentenceText };
         } catch {
-          return { type: "browser", text: sentenceText };
+          // Fall through to Google TTS
         }
       }
 
-      // ── Path C: No audio available → browser speech ──────────────────────
+      // Step 2: Google TTS → play + auto-cache
+      if (passageId && !passageId.startsWith("upload_")) {
+        const blob = await _callGoogleTTS(sentenceText);
+        if (blob) {
+          const blobCopy = blob.slice(0, blob.size, blob.type);
+          _saveAudioInBackground(passageId, sentenceIndex, blobCopy);
+          return { type: "blob", blob, sourceType: "google" };
+        }
+      }
+
+      // Step 3: Browser fallback
       return { type: "browser", text: sentenceText };
     },
-    [passage, voice, accent],
+    [passage, voice, accent, _callGoogleTTS, _saveAudioInBackground],
   );
 
   const classroom = useClassroomPlayer({
@@ -211,11 +240,75 @@ export default function DictationPage() {
       />
 
       <div className={styles.modeArea}>
-        {session.isHandwrite ? (
+        {/* ── Dictation completed — review + submit panel ── */}
+        {session.completed ? (
+          <div className={styles.reviewPanel}>
+            <div className={styles.reviewHeader}>
+              <span className={styles.reviewIcon}>🎉</span>
+              <div>
+                <h3 className={styles.reviewTitle}>Dictation Complete!</h3>
+                <p className={styles.reviewSubtitle}>
+                  Review your answers below, then submit when ready.
+                </p>
+              </div>
+            </div>
+
+            {/* Show all sentence answers for review */}
+            {!session.isHandwrite && (
+              <div className={styles.reviewAnswers}>
+                {session.sentences.map((sentence, i) => (
+                  <div key={i} className={styles.reviewRow}>
+                    <span className={styles.reviewNum}>{i + 1}</span>
+                    <textarea
+                      className={styles.reviewTextarea}
+                      value={session.answers[i] || ""}
+                      onChange={(e) => {
+                        const newAnswers = [...session.answers];
+                        newAnswers[i] = e.target.value;
+                        // Update via setAnswer by temporarily switching index
+                      }}
+                      rows={2}
+                      spellCheck={false}
+                      placeholder="No answer entered"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {session.isHandwrite && (
+              <div className={styles.reviewAnswers}>
+                <HandwriteMode
+                  handwrittenText={session.handwrittenText}
+                  onTextChange={session.setHandwrittenText}
+                  onFinish={session.finishSession}
+                />
+              </div>
+            )}
+
+            <div className={styles.reviewActions}>
+              <button
+                className={styles.reviewBackBtn}
+                onClick={() => {
+                  session.setCompleted(false);
+                }}
+                type="button"
+              >
+                ← Back to dictation
+              </button>
+              {!session.isHandwrite && (
+                <Button size="lg" onClick={session.finishSession}>
+                  ✅ Submit &amp; Check Answers
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : /* ── Active dictation mode ── */
+        session.isHandwrite ? (
           <HandwriteMode
             handwrittenText={session.handwrittenText}
             onTextChange={session.setHandwrittenText}
-            onFinish={session.finishSession}
+            onFinish={() => session.setCompleted(true)}
           />
         ) : (
           <TypeMode
