@@ -1,20 +1,17 @@
 const mongoose = require("mongoose");
 const { LEVELS } = require("../utils/constants");
 
-const SETTINGS_VERSION = 2; // increment when defaults change
-
 const dictationSettingsSchema = {
   voice: { type: String, enum: ["female", "male"], default: "female" },
   accent: {
     type: String,
     enum: ["american", "british", "indian"],
-    default: "british",
+    default: "american",
   },
   speed: { type: Number, default: 1.0, min: 0.25, max: 2.0 },
-  repeatCount: { type: Number, default: 2, min: 1, max: 5 },
+  repeatCount: { type: Number, default: 1, min: 1, max: 5 },
   pauseDuration: { type: Number, default: 2, min: 0, max: 15 },
-  autoAdvance: { type: Boolean, default: true },
-  _version: { type: Number, default: SETTINGS_VERSION },
+  autoAdvance: { type: Boolean, default: false },
 };
 
 const userSchema = new mongoose.Schema(
@@ -70,9 +67,8 @@ const userSchema = new mongoose.Schema(
         accent: "british",
         speed: 1.0,
         repeatCount: 2,
-        pauseDuration: 2,
+        pauseDuration: 3,
         autoAdvance: true,
-        _version: SETTINGS_VERSION,
       }),
     },
   },

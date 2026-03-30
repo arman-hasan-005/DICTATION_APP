@@ -23,7 +23,6 @@ export const PAUSE_OPTIONS = [
   { value: 15, label: "15 seconds" },
 ];
 
-export const SETTINGS_VERSION = 2;
 // voice/accent apply to:
 //   - Google TTS (uploaded content)
 //   - Browser speech synthesis (fallback)
