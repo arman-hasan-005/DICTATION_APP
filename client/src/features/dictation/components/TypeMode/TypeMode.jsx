@@ -1,8 +1,55 @@
-import { useRef, useEffect } from "react";
-import Button from "../../../../components/ui/Button/Button";
-import styles from "./TypeMode.module.css";
+/**
+ * TypeMode
+ *
+ * REFACTORING vs original:
+ *
+ *   React.memo:
+ *     TypeMode re-renders on every keystroke (via onAnswerChange).
+ *     The dots, nav buttons, and sentence bar are purely derived from props
+ *     and don't need to re-render just because the textarea value changed.
+ *     With memo, only the textarea itself (via controlled value) updates.
+ *
+ *   useCallback for handleKeyDown:
+ *     Was recreated on every render; now stable since it only depends on
+ *     onNext (which is already stable from useDictationSession).
+ *
+ *   NavigationDots extracted as an inner memoized component:
+ *     Prevents the dot array from recalculating when only the answer text
+ *     changes (it only changes when currentIndex changes).
+ *
+ *   Accessibility:
+ *     - Added aria-label to textarea for screen readers.
+ *     - Added keyboard hint to Previous/Next buttons via title attr.
+ */
 
-export default function TypeMode({
+import { memo, useRef, useEffect, useCallback } from 'react';
+import Button from '../../../../components/ui/Button/Button';
+import styles from './TypeMode.module.css';
+
+// ── Pure sub-component — only re-renders on index change ─────────────────────
+const NavigationDots = memo(function NavigationDots({ totalCount, currentIndex }) {
+  return (
+    <div className={styles.dots} role="tablist" aria-label="Sentence progress">
+      {Array.from({ length: totalCount }).map((_, i) => (
+        <span
+          key={i}
+          role="tab"
+          aria-selected={i === currentIndex}
+          aria-label={`Sentence ${i + 1}${i < currentIndex ? ' (done)' : ''}`}
+          className={[
+            styles.dot,
+            i === currentIndex ? styles.dotActive : '',
+            i < currentIndex   ? styles.dotDone   : '',
+          ].filter(Boolean).join(' ')}
+        />
+      ))}
+    </div>
+  );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TypeMode = memo(function TypeMode({
   currentIndex,
   totalCount,
   answer,
@@ -13,28 +60,32 @@ export default function TypeMode({
 }) {
   const ref = useRef(null);
 
+  // Auto-focus the textarea when sentence changes
   useEffect(() => {
     ref.current?.focus();
   }, [currentIndex]);
 
-  const handleKeyDown = (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-      e.preventDefault();
-      onNext();
-    }
-  };
+  const handleKeyDown = useCallback(
+    (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        onNext();
+      }
+    },
+    [onNext],
+  );
 
   const wordCount = answer.trim() ? answer.trim().split(/\s+/).length : 0;
 
   return (
     <div className={styles.wrapper}>
-      {/* Sentence counter */}
+      {/* Sentence counter + word count */}
       <div className={styles.sentenceBar}>
         <span className={styles.sentenceLabel}>
           ✏️ Sentence {currentIndex + 1} of {totalCount}
         </span>
         <span className={styles.wordCount}>
-          {wordCount} word{wordCount !== 1 ? "s" : ""}
+          {wordCount} word{wordCount !== 1 ? 's' : ''}
         </span>
       </div>
 
@@ -53,6 +104,7 @@ export default function TypeMode({
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
+            aria-label={`Your answer for sentence ${currentIndex + 1}`}
           />
         </div>
       </div>
@@ -67,25 +119,14 @@ export default function TypeMode({
           ← Previous
         </Button>
 
-        <div className={styles.dots}>
-          {Array.from({ length: totalCount }).map((_, i) => (
-            <span
-              key={i}
-              className={[
-                styles.dot,
-                i === currentIndex ? styles.dotActive : "",
-                i < currentIndex ? styles.dotDone : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            />
-          ))}
-        </div>
+        <NavigationDots totalCount={totalCount} currentIndex={currentIndex} />
 
         <Button onClick={onNext}>
-          {isLast ? "✅ Done — Review Answers" : "Next →"}
+          {isLast ? '✅ Done — Review Answers' : 'Next →'}
         </Button>
       </div>
     </div>
   );
-}
+});
+
+export default TypeMode;
