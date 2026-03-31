@@ -50,10 +50,12 @@ export default function ResultsPage() {
           </p>
         </div>
         <div className={styles.headerBtns}>
-          <Button variant="secondary" onClick={goSetup}>
+          <Button variant="secondary" onClick={goSetup} disabled={saving}>
             🔄 Try Again
           </Button>
-          <Button onClick={goDashboard}>🏠 Dashboard</Button>
+          <Button onClick={goDashboard} disabled={saving}>
+            {saving ? '💾 Saving…' : '🏠 Dashboard'}
+          </Button>
         </div>
       </div>
 
@@ -119,10 +121,12 @@ export default function ResultsPage() {
           🎉 You scored <strong>{overallPercentage}%</strong> — {grade.message}
         </p>
         <div className={styles.headerBtns}>
-          <Button variant="secondary" onClick={goSetup}>
+          <Button variant="secondary" onClick={goSetup} disabled={saving}>
             🔄 Try Again
           </Button>
-          <Button onClick={goDashboard}>🏠 Dashboard</Button>
+          <Button onClick={goDashboard} disabled={saving}>
+            {saving ? '💾 Saving…' : '🏠 Dashboard'}
+          </Button>
         </div>
       </div>
     </PageWrapper>

@@ -8,3 +8,10 @@
 .value{font-size:var(--text-xs);color:var(--color-text-muted)}
 .block{width:100%;border-radius:10px 10px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:8px;font-size:var(--text-sm);font-weight:var(--font-bold);color:white}
 @media(max-width:600px){.podium{display:none}}
+
+/* Accuracy line */
+.accuracy { font-size: 11px; color: var(--color-text-muted); margin: 0; }
+/* "you" tag */
+.youTag   { font-size: 11px; font-weight: var(--font-normal); color: var(--color-primary); }
+/* Ring around the current user's avatar */
+.avatarMe { box-shadow: 0 0 0 3px var(--color-primary); }

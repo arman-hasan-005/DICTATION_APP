@@ -6,10 +6,11 @@ import { ROUTES } from "../../../constants/routes";
 import styles from "./Navbar.module.css";
 
 const NAV_LINKS = [
-  { to: ROUTES.DASHBOARD, label: "Dashboard", icon: "🏠" },
-  { to: ROUTES.SETUP, label: "Practice", icon: "🎧" },
+  { to: ROUTES.DASHBOARD,   label: "Dashboard",   icon: "🏠" },
+  { to: ROUTES.SETUP,       label: "Practice",    icon: "🎧" },
+  { to: ROUTES.SESSIONS,    label: "History",     icon: "📊" },
   { to: ROUTES.LEADERBOARD, label: "Leaderboard", icon: "🏆" },
-  { to: ROUTES.PROFILE, label: "Profile", icon: "👤" },
+  { to: ROUTES.PROFILE,     label: "Profile",     icon: "👤" },
 ];
 
 export default function Navbar() {

@@ -1,15 +1,25 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import RegisterForm from '../components/RegisterForm/RegisterForm';
-import { useAuth } from '../../../hooks/useAuth';
-import { ROUTES } from '../../../constants/routes';
-import { LEVELS } from '../../../constants/levels';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import RegisterForm  from '../components/RegisterForm/RegisterForm';
+import GoogleButton  from '../components/GoogleButton/GoogleButton';
+import { useAuth }   from '../../../hooks/useAuth';
+import { ROUTES }    from '../../../constants/routes';
+import { LEVELS }    from '../../../constants/levels';
 import styles from './AuthPage.module.css';
+
+const GOOGLE_ERRORS = {
+  google_signup_failed: 'Google sign-up failed. Please try again or register with email.',
+};
 
 export default function RegisterPage() {
   const { register } = useAuth();
-  const navigate = useNavigate();
-  const [fields,   setFields]   = useState({ name:'', email:'', password:'', preferredLevel: LEVELS.BEGINNER });
+  const navigate     = useNavigate();
+  const location     = useLocation();
+
+  const errorCode   = new URLSearchParams(location.search).get('error');
+  const googleError = errorCode ? (GOOGLE_ERRORS[errorCode] ?? null) : null;
+
+  const [fields,   setFields]   = useState({ name: '', email: '', password: '', preferredLevel: LEVELS.BEGINNER });
   const [errors,   setErrors]   = useState({});
   const [loading,  setLoading]  = useState(false);
   const [apiError, setApiError] = useState('');
@@ -23,8 +33,8 @@ export default function RegisterPage() {
 
   const validate = () => {
     const errs = {};
-    if (!fields.name.trim())    errs.name     = 'Name is required';
-    if (!fields.email.trim())   errs.email    = 'Email is required';
+    if (!fields.name.trim())        errs.name     = 'Name is required';
+    if (!fields.email.trim())       errs.email    = 'Email is required';
     if (fields.password.length < 6) errs.password = 'Password must be at least 6 characters';
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -35,10 +45,10 @@ export default function RegisterPage() {
     if (!validate()) return;
     setLoading(true);
     try {
-      await register(fields);
-      navigate(ROUTES.DASHBOARD);
+      const result = await register(fields);
+      navigate(ROUTES.VERIFY_OTP, { state: { email: result.email } });
     } catch (err) {
-      setApiError(err.response?.data?.message || 'Registration failed.');
+      setApiError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -52,8 +62,31 @@ export default function RegisterPage() {
           <h1 className={styles.title}>Create account</h1>
           <p className={styles.subtitle}>Start your dictation journey today</p>
         </div>
-        <RegisterForm fields={fields} errors={errors} loading={loading} apiError={apiError} onChange={handleChange} onSubmit={handleSubmit} />
-        <p className={styles.footer}>Already have an account? <Link to={ROUTES.LOGIN} className={styles.link}>Log in</Link></p>
+
+        {/* Google error banner */}
+        {googleError && (
+          <div className={styles.apiError} role="alert">{googleError}</div>
+        )}
+
+        {/* Google Signup — creates new accounts, no OTP required */}
+        <GoogleButton mode="signup" />
+
+        <div className={styles.divider}>or</div>
+
+        {apiError && <div className={styles.apiError}>{apiError}</div>}
+        <RegisterForm
+          fields={fields}
+          errors={errors}
+          loading={loading}
+          apiError=""
+          onChange={handleChange}
+          onSubmit={handleSubmit}
+        />
+
+        <p className={styles.footer}>
+          Already have an account?{' '}
+          <Link to={ROUTES.LOGIN} className={styles.link}>Log in</Link>
+        </p>
       </div>
     </div>
   );

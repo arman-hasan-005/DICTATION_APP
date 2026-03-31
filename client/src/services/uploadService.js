@@ -2,16 +2,26 @@ import http from './http';
 import { API } from '../constants/api';
 
 const uploadService = {
-  /**
-   * Upload a file and extract text from it.
-   * Returns extracted text (PDF/DOCX/TXT) or base64 image data for client OCR.
-   * @param {File} file - The file object from an <input type="file">
-   */
+  /** Extract text from PDF, DOCX, TXT, or image (image returns base64 for client OCR) */
   extractText: (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return http.post(API.UPLOAD.EXTRACT, formData, {
+    const fd = new FormData();
+    fd.append('file', file);
+    return http.post(API.UPLOAD.EXTRACT, fd, {
       headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  /**
+   * Hybrid server-side OCR for handwriting mode.
+   * Server runs Google Vision + Tesseract concurrently and merges results.
+   * If all server engines fail, the response has requiresClientOCR: true.
+   */
+  ocrHandwriting: (file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return http.post(API.UPLOAD.OCR_HANDWRITING, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 35_000,   // Vision + Tesseract can take up to 25s on large images
     });
   },
 };

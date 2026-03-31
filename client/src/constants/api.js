@@ -1,28 +1,40 @@
 export const API = {
   AUTH: {
-    REGISTER: "/auth/register",
-    LOGIN: "/auth/login",
-    ME: "/auth/me",
-    PROFILE: "/auth/profile",
+    REGISTER:               '/auth/register',
+    LOGIN:                  '/auth/login',
+    ME:                     '/auth/me',
+    PROFILE:                '/auth/profile',
+    PASSWORD:               '/auth/password',
+    OTP_VERIFY:             '/auth/otp/verify',
+    OTP_RESEND:             '/auth/otp/resend',
+    FORGOT_PASSWORD:        '/auth/forgot-password',
+    RESET_PASSWORD:         '/auth/reset-password',
+    GOOGLE_LOGIN:           '/auth/google/login',
+    GOOGLE_SIGNUP:          '/auth/google/signup',
+    GOOGLE_VERIFY_OTP:      '/auth/google/verify-otp',
+    GOOGLE_RESEND_OTP:      '/auth/google/resend-otp',
+    GOOGLE_COMPLETE_PROFILE:'/auth/google/complete-profile',
   },
   SESSIONS: {
-    BASE: "/sessions",
-    BY_ID: (id) => `/sessions/${id}`,
+    BASE:   '/sessions',
+    BY_ID:  (id)   => `/sessions/${id}`,
+    STATS:  '/sessions/stats',
   },
   PASSAGES: {
-    BASE: "/passages",
-    BY_ID: (id) => `/passages/${id}`,
-    RANDOM: "/passages/random",
-    TTS: "/passages/tts", // Google TTS — uploaded content only
-    TTS_STATUS: "/passages/tts/status", // check if Google TTS is configured
-    AUDIO: (id, idx) => `/passages/${id}/audio/${idx}`, // stored audio
-    AUDIO_BASE: (id) => `/passages/${id}/audio`, // upload audio
+    BASE:       '/passages',
+    BY_ID:      (id)       => `/passages/${id}`,
+    RANDOM:     '/passages/random',
+    TTS:        '/passages/tts',
+    TTS_STATUS: '/passages/tts/status',
+    AUDIO:      (id, idx)  => `/passages/${id}/audio/${idx}`,
+    AUDIO_BASE: (id)       => `/passages/${id}/audio`,
   },
   LEADERBOARD: {
-    BASE: "/leaderboard",
+    BASE:    '/leaderboard',
     BY_TYPE: (type) => `/leaderboard?type=${type}`,
   },
   UPLOAD: {
-    EXTRACT: "/upload/extract",
+    EXTRACT:         '/upload/extract',
+    OCR_HANDWRITING: '/upload/ocr-handwriting',
   },
 };

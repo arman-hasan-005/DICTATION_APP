@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { getGrade, getScoreColor } from '../../../../utils/grading';
-import { formatRelativeTime } from '../../../../utils/formatting';
-import { getLevelConfig } from '../../../../constants/levels';
-import { ROUTES } from '../../../../constants/routes';
-import Button from '../../../../components/ui/Button/Button';
-import styles from './RecentSessions.module.css';
+import { formatRelativeTime }      from '../../../../utils/formatting';
+import { getLevelConfig }          from '../../../../constants/levels';
+import { ROUTES }                  from '../../../../constants/routes';
+import Button                      from '../../../../components/ui/Button/Button';
+import styles                      from './RecentSessions.module.css';
 
 export default function RecentSessions({ sessions = [], loading }) {
   const navigate = useNavigate();
@@ -13,7 +13,20 @@ export default function RecentSessions({ sessions = [], loading }) {
     <div className={styles.wrapper}>
       <div className={styles.header}>
         <h2 className={styles.title}>Recent Sessions</h2>
-        <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.SETUP)}>+ New Session</Button>
+        <div className={styles.headerActions}>
+          {sessions.length > 0 && (
+            <button
+              type="button"
+              className={styles.viewAllBtn}
+              onClick={() => navigate(ROUTES.SESSIONS)}
+            >
+              View all →
+            </button>
+          )}
+          <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.SETUP)}>
+            + New Session
+          </Button>
+        </div>
       </div>
       {sessions.length === 0 ? (
         <div className={styles.empty}>
@@ -28,12 +41,19 @@ export default function RecentSessions({ sessions = [], loading }) {
             const cfg   = getLevelConfig(s.level);
             return (
               <div key={s._id} className={styles.row}>
-                <div className={styles.gradeChip} style={{ background:grade.bgColor, color:grade.color }}>{grade.label}</div>
+                <div className={styles.gradeChip} style={{ background: grade.bgColor, color: grade.color }}>
+                  {grade.label}
+                </div>
                 <div className={styles.info}>
                   <p className={styles.passageTitle}>{s.passageTitle}</p>
-                  <p className={styles.meta}><span style={{color:cfg.color}}>{cfg.emoji} {cfg.label}</span> · {formatRelativeTime(s.createdAt)}</p>
+                  <p className={styles.meta}>
+                    <span style={{ color: cfg.color }}>{cfg.emoji} {cfg.label}</span>
+                    {' · '}{formatRelativeTime(s.createdAt)}
+                  </p>
                 </div>
-                <div className={styles.score} style={{ color:getScoreColor(s.score) }}>{s.score}%</div>
+                <div className={styles.score} style={{ color: getScoreColor(s.score) }}>
+                  {s.score}%
+                </div>
                 <div className={styles.xp}>+{s.xpEarned} XP</div>
               </div>
             );

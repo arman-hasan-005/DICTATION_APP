@@ -4,8 +4,9 @@ import { useAuth } from '../../../hooks/useAuth';
 import { ROUTES } from '../../../constants/routes';
 
 export const useLoginForm = () => {
-  const { login }  = useAuth();
-  const navigate   = useNavigate();
+  const { login, setPendingEmail } = useAuth();
+  const navigate = useNavigate();
+
   const [fields,   setFields]   = useState({ email: '', password: '' });
   const [errors,   setErrors]   = useState({});
   const [loading,  setLoading]  = useState(false);
@@ -20,8 +21,8 @@ export const useLoginForm = () => {
 
   const validate = () => {
     const errs = {};
-    if (!fields.email.trim())    errs.email    = 'Email is required';
-    if (!fields.password)        errs.password = 'Password is required';
+    if (!fields.email.trim()) errs.email    = 'Email is required';
+    if (!fields.password)     errs.password = 'Password is required';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -34,7 +35,14 @@ export const useLoginForm = () => {
       await login(fields.email, fields.password);
       navigate(ROUTES.DASHBOARD);
     } catch (err) {
-      setApiError(err.response?.data?.message || 'Login failed. Please try again.');
+      const msg = err.response?.data?.message || '';
+      // Server sends 'EMAIL_NOT_VERIFIED' as the message when OTP pending
+      if (msg === 'EMAIL_NOT_VERIFIED') {
+        setPendingEmail(fields.email);
+        navigate(ROUTES.VERIFY_OTP, { state: { email: fields.email } });
+      } else {
+        setApiError(msg || 'Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
