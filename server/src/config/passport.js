@@ -15,21 +15,28 @@
  *   New user                        → plain object { isNewGoogleUser, googleId, email, name }
  */
 
-const passport       = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { googleClientId, googleClientSecret, clientUrl, port, isDev } = require('./env');
-const User   = require('../models/User');
-const logger = require('./logger');
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const {
+  googleClientId,
+  googleClientSecret,
+  clientUrl,
+  port,
+  isDev,
+  backendUrl,
+} = require("./env");
+const User = require("../models/User");
+const logger = require("./logger");
 
 if (googleClientId && googleClientSecret) {
   const callbackURL = isDev
     ? `http://localhost:${port}/api/auth/google/callback`
-    : `${clientUrl.replace(/\/$/, '')}/api/auth/google/callback`;
+    : `${backendUrl.replace(/\/$/, "")}/api/auth/google/callback`;
 
   passport.use(
     new GoogleStrategy(
       {
-        clientID:     googleClientId,
+        clientID: googleClientId,
         clientSecret: googleClientSecret,
         callbackURL,
         // passReqToCallback lets us read req.query.state inside the verify fn
@@ -38,7 +45,8 @@ if (googleClientId && googleClientSecret) {
       async (_accessToken, _refreshToken, profile, done) => {
         try {
           const email = profile.emails?.[0]?.value;
-          if (!email) return done(new Error('No email returned from Google'), null);
+          if (!email)
+            return done(new Error("No email returned from Google"), null);
 
           // 1. Returning Google user
           const byGoogleId = await User.findOne({ googleId: profile.id });
@@ -47,8 +55,8 @@ if (googleClientId && googleClientSecret) {
           // 2. Existing local-auth account with same email → link it
           const byEmail = await User.findOne({ email });
           if (byEmail) {
-            byEmail.googleId        = profile.id;
-            byEmail.authProvider    = 'google';
+            byEmail.googleId = profile.id;
+            byEmail.authProvider = "google";
             byEmail.isEmailVerified = true;
             await byEmail.save();
             return done(null, byEmail);
@@ -59,20 +67,21 @@ if (googleClientId && googleClientSecret) {
             isNewGoogleUser: true,
             googleId: profile.id,
             email,
-            name: profile.displayName || email.split('@')[0],
+            name: profile.displayName || email.split("@")[0],
           });
-
         } catch (err) {
-          logger.error('Google OAuth strategy error', { error: err.message });
+          logger.error("Google OAuth strategy error", { error: err.message });
           return done(err, null);
         }
       },
     ),
   );
 
-  logger.info('Google OAuth strategy registered');
+  logger.info("Google OAuth strategy registered");
 } else {
-  logger.warn('Google OAuth not configured — GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET missing');
+  logger.warn(
+    "Google OAuth not configured — GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET missing",
+  );
 }
 
 module.exports = passport;
